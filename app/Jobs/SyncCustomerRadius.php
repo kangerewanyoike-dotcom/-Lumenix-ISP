@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Domain\Tenancy\TenantContext;
 use App\Models\Customer;
-use App\Models\Router;
 use App\Models\Tenant;
 use App\Services\RadiusSubscriberSync;
 use Illuminate\Bus\Queueable;
@@ -14,13 +13,16 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 final class SyncCustomerRadius implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 5;
-    public int $uniqueFor = 60;
+    // Keep the uniqueness lock for the full retry window to avoid the minute scheduler
+    // dispatching duplicate work while this job is backing off.
+    public int $uniqueFor = 900;
 
     public function __construct(public readonly int $tenantId, public readonly int $customerId) {}
 
@@ -46,14 +48,31 @@ final class SyncCustomerRadius implements ShouldQueue, ShouldBeUnique
                 ? 'blocked'
                 : (! $customer->plan || ! $customer->plan->active
                     ? 'failed'
-                    : (Router::query()->where('status', 'active')->where('telemetry_updated_at', '>=', now()->subMinutes(5))->exists() ? 'ready' : 'pending'));
+                    : 'ready');
             DB::table('customers')->where('tenant_id', $tenant->id)->where('id', $customer->id)->update([
                 'provisioning_status' => $state,
-                'provisioned_at' => $state === 'pending' ? null : now(),
+                'provisioned_at' => in_array($state, ['ready', 'blocked'], true) ? now() : null,
                 'updated_at' => now(),
             ]);
         } finally {
             $context->clear();
+        }
+    }
+
+    public function failed(?Throwable $exception): void
+    {
+        DB::table('customers')
+            ->where('tenant_id', $this->tenantId)
+            ->where('id', $this->customerId)
+            ->where('provisioning_status', 'pending')
+            ->update([
+                'provisioning_status' => 'failed',
+                'provisioned_at' => null,
+                'updated_at' => now(),
+            ]);
+
+        if ($exception) {
+            report($exception);
         }
     }
 }

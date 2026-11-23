@@ -38,22 +38,24 @@
     </form>
 
     <section class="mt-5 overflow-hidden rounded-xl bg-white">
-        <div class="overflow-x-auto"><table class="w-full min-w-[1050px] text-left text-sm">
-            <thead><tr class="border-b border-slate-100"><th class="px-5 py-3">Customer</th><th>Plan</th><th>Service</th><th>Connection</th><th>Balance due</th><th>Last payment</th><th class="px-5 py-3 text-right">Account</th></tr></thead>
+        <div class="overflow-x-auto"><table class="w-full min-w-[1200px] text-left text-sm">
+            <thead><tr class="border-b border-slate-100"><th class="px-5 py-3">Customer</th><th>Plan</th><th>Service</th><th>Provisioning</th><th>Connection</th><th>Balance due</th><th>Last payment</th><th class="px-5 py-3 text-right">Account</th></tr></thead>
             <tbody>
                 @forelse($customers as $customer)
                     @php($balance = (int) ($customer->balance_due_minor ?? 0))
+                    @php($provisioningLabel = ['ready' => 'RADIUS configured', 'pending' => 'Pending', 'failed' => 'Failed', 'blocked' => 'Blocked'][$customer->provisioning_status] ?? ucfirst($customer->provisioning_status))
                     <tr class="border-b border-slate-50 last:border-0 hover:bg-slate-50/70">
                         <td class="px-5 py-4"><a class="font-semibold text-slate-900 hover:text-indigo-700" href="{{ route('admin.customers.show', $customer) }}">{{ $customer->name }}</a><span class="mt-1 block text-xs text-slate-500">{{ $customer->account_number }} · {{ $customer->phone }}</span></td>
                         <td><span class="font-medium">{{ $customer->plan?->name ?? 'No plan' }}</span><span class="mt-1 block text-xs text-slate-500">{{ $customer->pppoe_username }}</span></td>
                         <td><span @class(['rounded-full px-2.5 py-1 text-xs font-semibold', 'bg-emerald-50 text-emerald-700' => $customer->status === 'active', 'bg-amber-50 text-amber-800' => $customer->status !== 'active'])>{{ ucfirst($customer->status) }}</span></td>
+                        <td><span @class(['rounded-full px-2.5 py-1 text-xs font-semibold', 'bg-emerald-50 text-emerald-700' => $customer->provisioning_status === 'ready', 'bg-amber-50 text-amber-800' => $customer->provisioning_status === 'pending', 'bg-rose-50 text-rose-700' => $customer->provisioning_status === 'failed', 'bg-slate-100 text-slate-600' => $customer->provisioning_status === 'blocked'])>{{ $provisioningLabel }}</span></td>
                         <td><span class="inline-flex items-center gap-2 text-xs font-medium {{ $customer->active_session_count ? 'text-emerald-700' : 'text-slate-500' }}"><span class="h-2 w-2 rounded-full {{ $customer->active_session_count ? 'bg-emerald-500' : 'bg-slate-300' }}"></span>{{ $customer->active_session_count ? 'Online' : 'Offline' }}</span></td>
                         <td><span class="font-semibold {{ $balance > 0 ? 'text-rose-700' : 'text-slate-700' }}">{{ $currency }} {{ $money($balance) }}</span>@if($balance > 0)<span class="mt-1 block text-[11px] text-slate-500">Outstanding</span>@endif</td>
                         <td class="text-xs text-slate-600">{{ $customer->last_payment_at ? \Illuminate\Support\Carbon::parse($customer->last_payment_at)->format('d M Y') : 'No payment recorded' }}</td>
                         <td class="px-5 py-4 text-right"><a class="font-semibold text-indigo-700 underline" href="{{ route('admin.customers.show', $customer) }}">View account</a></td>
                     </tr>
                 @empty
-                    <tr><td class="px-5 py-12 text-center" colspan="7"><p class="font-semibold text-slate-700">No customers match these filters</p><p class="mt-1 text-sm text-slate-500">Try a different search or clear the filters.</p></td></tr>
+                    <tr><td class="px-5 py-12 text-center" colspan="8"><p class="font-semibold text-slate-700">No customers match these filters</p><p class="mt-1 text-sm text-slate-500">Try a different search or clear the filters.</p></td></tr>
                 @endforelse
             </tbody>
         </table></div>
