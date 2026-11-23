@@ -12,6 +12,8 @@
         $membership = request()->attributes->get('tenant_membership');
         $isManager = in_array($membership?->role, ['owner', 'admin'], true);
         $isPlatformAdmin = auth()->check() && auth()->user()->platformAdmin()->exists();
+        $requiresTwoFactor = auth()->check() && ($isPlatformAdmin || auth()->user()->tenantMemberships()->where('status', 'active')->whereIn('role', ['owner', 'admin'])->exists());
+        $showAppNavigation = auth()->check() && (! $requiresTwoFactor || (auth()->user()->two_factor_confirmed_at && session()->boolean('two_factor_passed')));
         $platformBrandName = 'Lumenix';
         if ($isPlatformAdmin && \Illuminate\Support\Facades\Schema::hasTable('platform_settings')) {
             $platformBrandName = \Illuminate\Support\Facades\DB::table('platform_settings')->where('key', 'brand_name')->value('value') ?: 'Lumenix';
@@ -51,8 +53,8 @@
         $currentLabel = collect([...$tenantLinks, ...$managementLinks, ...$platformLinks])->first(fn ($link) => $currentName === $link['route'])['label'] ?? \Illuminate\Support\Str::of($currentName ?? 'Workspace')->afterLast('.')->replace('-', ' ')->title();
     @endphp
 
-    <div class="app-frame {{ auth()->check() ? '' : 'guest-frame' }}" data-app-frame data-theme="{{ $hasTenant ? 'tenant' : ($isPlatformAdmin ? 'platform' : 'default') }}">
-        @auth
+    <div class="app-frame {{ $showAppNavigation ? '' : 'guest-frame' }}" data-app-frame data-theme="{{ $hasTenant ? 'tenant' : ($isPlatformAdmin ? 'platform' : 'default') }}">
+        @if($showAppNavigation)
         <div class="sidebar-scrim" data-sidebar-scrim></div>
         <aside class="app-sidebar" data-sidebar aria-label="Main navigation">
             <a href="{{ $hasTenant ? route('tenant.dashboard') : ($isPlatformAdmin ? route('platform.dashboard') : route('login')) }}" class="brand-lockup" aria-label="Lumenix home">
@@ -132,18 +134,19 @@
             </div>
             <button type="button" class="sidebar-collapse" data-sidebar-toggle aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/><path d="M20 4v16"/></svg></button>
         </aside>
-        @endauth
+        @endif
 
         <main class="app-main">
             <header class="topbar">
                 <div class="topbar-leading">
-                    @auth
+                    @if($showAppNavigation)
                     <button type="button" class="mobile-menu-toggle" data-mobile-menu aria-label="Open navigation" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-                    @endauth
+                    @endif
                     <div class="topbar-heading"><div class="breadcrumb"><span>{{ $hasTenant ? $membership->tenant->name : ($isPlatformAdmin ? 'Platform' : 'Welcome') }}</span><span class="breadcrumb-separator">/</span><strong>{{ $currentLabel }}</strong></div><h1>{{ $currentLabel }}</h1></div>
                 </div>
                 <div class="topbar-actions">
                     @if($hasTenant)<span class="topbar-status"><span></span>Workspace active</span>@elseif($isPlatformAdmin)<span class="topbar-status platform-status"><span></span>Platform console</span>@endif
+                    @if($showAppNavigation)<a class="text-xs font-semibold text-slate-600 underline" href="{{ route('account.security') }}">Security</a>@endif
                     <span class="topbar-date">{{ now()->format('D, M j') }}</span>
                     <span class="topbar-user-avatar" title="{{ auth()->user()?->name }}">{{ \Illuminate\Support\Str::substr(auth()->user()?->name ?? 'L', 0, 1) }}</span>
                 </div>

@@ -7,10 +7,10 @@ This is the Phase 4 integration checklist. Run it with a disposable MikroTik CHR
 From the repository root, with Docker Desktop running:
 
 ```powershell
-docker compose up -d --build
-docker compose exec app php artisan migrate
-docker compose exec freeradius freeradius -XC
-docker compose logs freeradius
+docker compose --profile development up -d --build
+docker compose --profile development exec app php artisan migrate
+docker compose --profile development exec freeradius freeradius -XC
+docker compose --profile development logs freeradius
 ```
 
 Confirm the pinned FreeRADIUS 3.2.10 image loads its PostgreSQL SQL driver and starts without configuration errors. The app migration creates the upstream PostgreSQL SQL tables and the separate tenant-scoped usage projection.
@@ -27,7 +27,7 @@ Confirm the pinned FreeRADIUS 3.2.10 image loads its PostgreSQL SQL driver and s
 The `nas` table is read for FreeRADIUS clients when that process starts. Saving or changing router registration writes the row; restart FreeRADIUS to refresh its in-memory client list:
 
 ```powershell
-docker compose restart freeradius
+docker compose --profile development restart freeradius
 ```
 
 Avoid overlapping NAS endpoint addresses across tenants on the same FreeRADIUS instance. Standard client lookup is by source address and does not carry tenant context.
@@ -61,7 +61,7 @@ Connect the test PPPoE client and confirm start, interim, and stop records in `r
 For a one-time full-table backfill:
 
 ```powershell
-docker compose exec app php artisan radius:ingest-accounting --all
+docker compose --profile development exec app php artisan radius:ingest-accounting --all
 ```
 
 Repeat the command and verify it creates no duplicate app session. Check that the projection's `tenant_id` and `customer_id` match the test subscriber and that octets/session duration are updated from the latest RADIUS record.

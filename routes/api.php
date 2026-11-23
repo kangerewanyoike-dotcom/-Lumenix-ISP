@@ -15,7 +15,7 @@ Route::post('/v1/webhooks/mpesa/stk-callback/{token}', [DarajaCallbackController
 Route::post('/v1/webhooks/mpesa/c2b-validation/{token}', [DarajaCallbackController::class, 'validateC2b'])->middleware('throttle:daraja-callback');
 Route::post('/v1/webhooks/mpesa/c2b-confirmation/{token}', [DarajaCallbackController::class, 'c2b'])->middleware('throttle:daraja-callback');
 Route::prefix('v1')->middleware(['web', 'auth'])->group(function (): void {
-    Route::prefix('admin')->middleware('platform.admin')->group(function (): void {
+    Route::prefix('admin')->middleware(['platform.admin', 'staff.two-factor'])->group(function (): void {
         Route::get('/dashboard', [PlatformApiController::class, 'dashboard']);
         Route::get('/tenants', [PlatformApiController::class, 'tenants']);
         Route::post('/tenants', [PlatformApiController::class, 'createTenant']);
@@ -27,7 +27,7 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function (): void {
         Route::get('/revenue', [PlatformApiController::class, 'revenue']);
     });
 
-    Route::prefix('tenant')->middleware('tenant')->group(function (): void {
+    Route::prefix('tenant')->middleware(['tenant', 'staff.two-factor'])->group(function (): void {
         Route::get('/dashboard', [TenantApiController::class, 'dashboard']);
         Route::get('/customers', [TenantApiController::class, 'customers']);
         Route::post('/customers', [TenantApiController::class, 'createCustomer']);

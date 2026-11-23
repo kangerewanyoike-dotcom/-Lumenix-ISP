@@ -13,6 +13,7 @@ use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -145,6 +146,14 @@ final class PlatformOperationsController extends Controller
         $database = false;
         $redis = false;
         try {
+            $queueWorkerSeenAt = Cache::get('health:queue-worker-last-seen');
+            $schedulerSeenAt = Cache::get('health:scheduler-last-seen');
+        } catch (\Throwable) {
+            $queueWorkerSeenAt = null;
+            $schedulerSeenAt = null;
+        }
+        $failedQueueJobs = 0;
+        try {
             DB::select('select 1');
             $database = true;
         } catch (\Throwable) {
@@ -154,9 +163,20 @@ final class PlatformOperationsController extends Controller
             $redis = true;
         } catch (\Throwable) {
         }
+        try {
+            $failedQueueJobs = (int) DB::table('failed_jobs')->count();
+        } catch (\Throwable) {
+        }
 
         return view('platform.monitoring', [
-            'checks' => ['Application' => true, 'Database' => $database, 'Queue / Redis' => $redis],
+            'checks' => [
+                'Application' => true,
+                'Database' => $database,
+                'Queue / Redis' => $redis,
+                'Queue worker' => is_numeric($queueWorkerSeenAt) && (int) $queueWorkerSeenAt >= now()->subMinutes(3)->timestamp,
+                'Scheduler' => is_numeric($schedulerSeenAt) && (int) $schedulerSeenAt >= now()->subMinutes(3)->timestamp,
+            ],
+            'failedQueueJobs' => $failedQueueJobs,
             'phpVersion' => PHP_VERSION,
             'laravelVersion' => app()->version(),
             'uptime' => function_exists('sys_getloadavg') ? sys_getloadavg() : null,

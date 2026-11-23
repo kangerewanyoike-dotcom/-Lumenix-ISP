@@ -87,9 +87,7 @@ final class TenantApiController extends Controller
             abort(422, 'The current SaaS plan router limit has been reached.');
         }
         $data = $request->validated();
-        if ($data['connection_mode'] === 'agent') {
-            $data['endpoint'] = $data['api_username'] = $data['api_password'] = $data['radius_secret'] = null;
-        }
+        $data += ['agent_id' => null, 'api_username' => null, 'api_password' => null];
         $router = Router::query()->create($data);
         $audit->record('router.created', (int) $context->id(), Router::class, (string) $router->id, ['connection_mode' => $router->connection_mode, 'source' => 'api']);
 

@@ -7,6 +7,7 @@ use App\Jobs\SyncCustomerRadius;
 use App\Models\Customer;
 use App\Models\Tenant;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 final class SyncRouterStatus extends Command
 {
@@ -16,6 +17,11 @@ final class SyncRouterStatus extends Command
 
     public function handle(TenantContext $context): int
     {
+        try {
+            Cache::put('health:scheduler-last-seen', time(), now()->addMinutes(3));
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
         $queued = 0;
         foreach (Tenant::query()->where('status', 'active')->orderBy('id')->get() as $tenant) {
             $context->set($tenant);

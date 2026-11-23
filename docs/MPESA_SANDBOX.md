@@ -21,6 +21,6 @@ Never commit Daraja credentials, callback URLs, or customer payment data to sour
 ## Local checks
 
 ```powershell
-docker compose exec app php artisan migrate
-docker compose exec app php artisan test --filter=DarajaPaymentsTest
+docker compose --profile development exec app php artisan migrate
+docker compose --profile development exec app php artisan test --filter=DarajaPaymentsTest
 ```

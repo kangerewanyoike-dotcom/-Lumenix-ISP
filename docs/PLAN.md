@@ -8,7 +8,7 @@ Phases run only when explicitly started by the user. Each phase ends with review
 
 **Acceptance criteria:**
 
-- `docker compose up -d`, install, migration/seed, test, and Pint commands work as documented.
+- `docker compose --profile development up -d`, install, migration/seed, test, and Pint commands work as documented.
 - Demo platform admin and at least two tenants can be seeded without committed secrets.
 - Tenant-scoped models fail closed without context; policies protect tenant data.
 - Tests prove tenant A cannot list, read, modify, delete, or traverse tenant B records, including nested relations and queued work where implemented.

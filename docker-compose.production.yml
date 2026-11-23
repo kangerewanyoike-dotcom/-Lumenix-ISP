@@ -1,0 +1,59 @@
+services:
+  web:
+    build: .
+    profiles: ["production"]
+    env_file: .env
+    environment:
+      APP_NAME: Lumenix
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: https://${APP_DOMAIN:?Set APP_DOMAIN in .env}
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
+      SESSION_SECURE_COOKIE: "true"
+    expose:
+      - "80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  queue:
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: https://${APP_DOMAIN:?Set APP_DOMAIN in .env}
+      SESSION_SECURE_COOKIE: "true"
+
+  scheduler:
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: https://${APP_DOMAIN:?Set APP_DOMAIN in .env}
+      SESSION_SECURE_COOKIE: "true"
+
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["production"]
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Set APP_DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_started
+
+volumes:
+  caddy-data:
+  caddy-config:

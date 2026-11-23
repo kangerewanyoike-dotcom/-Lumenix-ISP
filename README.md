@@ -6,29 +6,29 @@ Lumenix is a multi-tenant billing and subscriber management platform for Kenyan 
 
 - Docker Desktop with Docker Compose.
 - Copy `.env.example` to `.env`, set a unique `DB_PASSWORD`, and provide local demo account credentials before seeding. In PowerShell: `Copy-Item .env.example .env`.
-- The platform admin and ISP owner are required to enroll in an authenticator app on first sign-in.
+- Platform admins and ISP owners/admins must enroll in an authenticator app before opening privileged pages.
 
-The `.env` file contains local secrets and must not be committed. Generate `APP_KEY` after containers start with `docker compose exec app php artisan key:generate`; Compose mounts `.env` into the app container so the key is saved on the host. Recreate the app and workers so they load the new key.
+The `.env` file contains local secrets and must not be committed. Generate `APP_KEY` after containers start with `docker compose --profile development exec app php artisan key:generate`; Compose mounts `.env` into the app container so the key is saved on the host. Recreate the app and workers so they load the new key.
 
 ## Start locally
 
 ```sh
-docker compose up -d
-docker compose exec app php artisan key:generate
-docker compose up -d --force-recreate app queue scheduler
-docker compose exec app composer install --no-security-blocking
-docker compose exec app php artisan migrate:fresh --seed
+docker compose --profile development up -d --build
+docker compose --profile development exec app php artisan key:generate
+docker compose --profile development up -d --force-recreate app queue scheduler
+docker compose --profile development exec app composer install --no-security-blocking
+docker compose --profile development exec app php artisan migrate:fresh --seed
 ```
 
-After changing application code, rebuild the PHP containers before executing it: `docker compose up -d --build app queue scheduler`.
+After changing application code, rebuild the local app and workers with: `docker compose --profile development up -d --build app queue scheduler frontend`.
 
-Open <http://localhost:8000>. The frontend development server runs on port 5173. PostgreSQL is on port 5432; FreeRADIUS listens on UDP 1812/1813. Rebuild the app and FreeRADIUS images for Phase 4 with `docker compose up -d --build app queue scheduler freeradius`.
+Open <http://localhost:8000>. The frontend development server runs on port 5173. PostgreSQL is available on loopback port 5432; FreeRADIUS listens on UDP 1812/1813. Rebuild the app and FreeRADIUS images for Phase 4 with `docker compose --profile development up -d --build app queue scheduler frontend freeradius`.
 
 ## Test and format
 
 ```sh
-docker compose exec app php artisan test
-docker compose exec app ./vendor/bin/pint
+docker compose --profile development exec app php artisan test
+docker compose --profile development exec app ./vendor/bin/pint
 ```
 
 Tests use an in-memory SQLite database; the application uses PostgreSQL in Compose.
@@ -43,7 +43,7 @@ Phase 2 adds tenant-scoped plan, customer, and router administration. PPPoE user
 
 ## Phase 3 billing
 
-Phase 3 adds recurring invoices for daily, weekly, and monthly plans; same-cycle-frequency plan proration; monthly billing-day transitions; one-off charges; tenant-configured VAT; and customer credit grants/applications. Invoice and line totals snapshot the VAT rate and are immutable after issue. Proration uses inclusive dates and rounds half-up to the nearest minor unit. VAT defaults to 0 basis points until the tenant confirms its applicable rate. The scheduler runs `schedule:run`; to run billing manually: `docker compose exec app php artisan billing:run --date=YYYY-MM-DD`.
+Phase 3 adds recurring invoices for daily, weekly, and monthly plans; same-cycle-frequency plan proration; monthly billing-day transitions; one-off charges; tenant-configured VAT; and customer credit grants/applications. Invoice and line totals snapshot the VAT rate and are immutable after issue. Proration uses inclusive dates and rounds half-up to the nearest minor unit. VAT defaults to 0 basis points until the tenant confirms its applicable rate. The scheduler runs `schedule:run`; to run billing manually: `docker compose --profile development exec app php artisan billing:run --date=YYYY-MM-DD`.
 
 ## Phase 1 foundation
 

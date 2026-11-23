@@ -24,8 +24,23 @@ final class AuthController extends Controller
         }
 
         $request->session()->regenerate();
+        $user = Auth::user();
+        if ($user?->two_factor_confirmed_at) {
+            $request->session()->put('two_factor_passed', false);
+
+            return redirect()->route('two-factor.challenge');
+        }
+        if ($user && $this->requiresTwoFactor($user)) {
+            return redirect()->route('account.security')->with('warning', 'Set up an authenticator code before opening privileged staff pages.');
+        }
 
         return redirect()->route('tenant.select');
+    }
+
+    private function requiresTwoFactor(\App\Models\User $user): bool
+    {
+        return $user->platformAdmin()->exists() || $user->tenantMemberships()
+            ->where('status', 'active')->whereIn('role', ['owner', 'admin'])->exists();
     }
 
     public function logout(Request $request): RedirectResponse

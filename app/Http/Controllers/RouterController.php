@@ -35,16 +35,11 @@ final class RouterController extends Controller
             throw ValidationException::withMessages(['plan' => 'Your '.$subscription->plan->name.' plan allows up to '.$subscription->plan->max_routers.' routers. Upgrade the SaaS plan to register another router.']);
         }
         $data = $request->validated();
-        if ($data['connection_mode'] === 'agent') {
-            $data['endpoint'] = null;
-            $data['api_username'] = null;
-            $data['api_password'] = null;
-            $data['radius_secret'] = null;
-        }
+        $data += ['agent_id' => null, 'api_username' => null, 'api_password' => null];
         $router = Router::create($data);
         $audit->record('router.created', (int) $context->id(), Router::class, (string) $router->id, ['connection_mode' => $router->connection_mode]);
 
-        return redirect()->route('admin.routers.index')->with('status', 'Router registered. Credentials are encrypted and will not be displayed.');
+        return redirect()->route('admin.routers.index')->with('status', 'Router registered for FreeRADIUS over the private VPN. Shared secret is encrypted and will not be displayed.');
     }
 
     public function edit(string $router): View
@@ -60,23 +55,10 @@ final class RouterController extends Controller
         $router = Router::query()->findOrFail($router);
         $this->authorize('update', $router);
         $data = $request->validated();
-        if ($data['connection_mode'] === 'agent') {
-            $data['endpoint'] = null;
-            $data['api_username'] = null;
-            $data['api_password'] = null;
-            $data['radius_secret'] = null;
-        } else {
-            if (blank($data['radius_secret'] ?? null)) {
-                unset($data['radius_secret']);
-            }
-            if (blank($data['api_username'] ?? null)) {
-                unset($data['api_username']);
-            }
-            if (blank($data['api_password'] ?? null)) {
-                unset($data['api_password']);
-            }
-            $data['agent_id'] = null;
+        if (blank($data['radius_secret'] ?? null)) {
+            unset($data['radius_secret']);
         }
+        $data += ['agent_id' => null, 'api_username' => null, 'api_password' => null];
         $router->update($data);
         $audit->record('router.updated', (int) $context->id(), Router::class, (string) $router->id, ['connection_mode' => $router->connection_mode]);
 

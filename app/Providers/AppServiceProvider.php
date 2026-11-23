@@ -17,7 +17,10 @@ use App\Policies\RouterPolicy;
 use App\Services\RadclientRouterConnection;
 use App\Services\RouterConnection;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Queue\Events\Looping;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -35,6 +38,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(Looping::class, static function (Looping $_event): void {
+            static $lastHeartbeat = 0;
+            if (time() - $lastHeartbeat >= 30) {
+                try {
+                    Cache::put('health:queue-worker-last-seen', time(), now()->addMinutes(3));
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+                $lastHeartbeat = time();
+            }
+        });
+
         RateLimiter::for('staff-login', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
         RateLimiter::for('tenant-register', fn (Request $request) => Limit::perMinute(3)->by($request->ip()));
         RateLimiter::for('portal-login', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));

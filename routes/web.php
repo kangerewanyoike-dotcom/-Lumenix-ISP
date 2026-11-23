@@ -16,6 +16,7 @@ use App\Http\Controllers\PlatformTenantController;
 use App\Http\Controllers\PortalAuthController;
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\RouterController;
+use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\TenantRegistrationController;
 use App\Http\Controllers\TenantReportController;
 use App\Http\Controllers\TenantSelectionController;
@@ -50,10 +51,18 @@ Route::middleware('customer.portal')->prefix('portal')->name('portal.')->group(f
 });
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('/account/security', [SecurityController::class, 'show'])->name('account.security');
+    Route::post('/account/security/two-factor/setup', [SecurityController::class, 'begin'])->middleware('throttle:staff-login')->name('account.security.two-factor.setup');
+    Route::post('/account/security/two-factor/confirm', [SecurityController::class, 'confirm'])->middleware('throttle:staff-login')->name('account.security.two-factor.confirm');
+    Route::get('/two-factor/challenge', [SecurityController::class, 'challenge'])->name('two-factor.challenge');
+    Route::post('/two-factor/challenge', [SecurityController::class, 'verifyChallenge'])->middleware('throttle:staff-login')->name('two-factor.verify');
+});
+
+Route::middleware('auth')->group(function (): void {
     Route::get('/tenant/select', [TenantSelectionController::class, 'index'])->name('tenant.select');
     Route::post('/tenant/select', [TenantSelectionController::class, 'select'])->name('tenant.select.store');
-    Route::get('/dashboard', [TenantReportController::class, 'dashboard'])->middleware('tenant')->name('tenant.dashboard');
-    Route::prefix('admin')->name('admin.')->middleware('tenant')->group(function (): void {
+    Route::get('/dashboard', [TenantReportController::class, 'dashboard'])->middleware(['tenant', 'staff.two-factor'])->name('tenant.dashboard');
+    Route::prefix('admin')->name('admin.')->middleware(['tenant', 'staff.two-factor'])->group(function (): void {
         Route::get('/hotspot', [HotspotController::class, 'index'])->name('hotspot.index');
         Route::post('/hotspot/vouchers', [HotspotController::class, 'store'])->middleware('throttle:20,1')->name('hotspot.vouchers.store');
         Route::patch('/hotspot/vouchers/{voucher}/revoke', [HotspotController::class, 'revoke'])->name('hotspot.vouchers.revoke');
@@ -69,6 +78,7 @@ Route::middleware('auth')->group(function (): void {
         Route::post('/billing/invoices/{invoice}/stk', [BillingController::class, 'initiatePayment'])->name('billing.invoices.stk');
         Route::get('/customers/{customer}/export', [CustomerController::class, 'export'])->name('customers.export');
         Route::post('/customers/{customer}/reactivate', [CustomerController::class, 'reactivate'])->name('customers.reactivate');
+        Route::post('/customers/{customer}/provisioning/retry', [CustomerController::class, 'retryProvisioning'])->name('customers.provisioning.retry');
         Route::get('/automation', [AutomationController::class, 'index'])->name('automation.index');
         Route::get('/branding', [BrandingController::class, 'index'])->name('branding.index');
         Route::put('/branding', [BrandingController::class, 'update'])->name('branding.update');
@@ -95,7 +105,7 @@ Route::middleware('auth')->group(function (): void {
         Route::put('/customers/{customer}/portal-account', [CustomerController::class, 'savePortalAccount'])->name('customers.portal-account');
         Route::resource('routers', RouterController::class)->except(['show']);
     });
-    Route::prefix('platform')->name('platform.')->middleware('platform.admin')->group(function (): void {
+    Route::prefix('platform')->name('platform.')->middleware(['platform.admin', 'staff.two-factor'])->group(function (): void {
         Route::get('/', [PlatformOperationsController::class, 'dashboard'])->name('dashboard');
         Route::get('/plans', [PlatformOperationsController::class, 'plans'])->name('plans.index');
         Route::put('/plans/{plan}', [PlatformOperationsController::class, 'updatePlan'])->name('plans.update');

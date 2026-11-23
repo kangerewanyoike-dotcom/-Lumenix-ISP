@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\RequirePlatformAdmin;
+use App\Http\Middleware\RequireStaffTwoFactor;
 use App\Http\Middleware\ResolveCustomerPortal;
 use App\Http\Middleware\ResolveTenant;
 use Illuminate\Foundation\Application;
@@ -15,11 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
         $middleware->validateCsrfTokens(except: ['daraja/*']);
         $middleware->alias([
             'tenant' => ResolveTenant::class,
             'customer.portal' => ResolveCustomerPortal::class,
             'platform.admin' => RequirePlatformAdmin::class,
+            'staff.two-factor' => RequireStaffTwoFactor::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

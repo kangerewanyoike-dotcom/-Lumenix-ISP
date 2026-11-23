@@ -20,7 +20,7 @@ Tenant dashboard and reports read only the current tenant's customer, invoice, p
 Platform admins open **Platform → Lumenix platform billing** to set each tenant's price per active subscriber, currency, billing day, and subscription state. Configure the rate before issuing platform invoices. Generate a period manually with:
 
 ```sh
-docker compose exec app php artisan platform-billing:run --period=2026-10
+docker compose --profile development exec app php artisan platform-billing:run --period=2026-10
 ```
 
 Without `--period`, the command uses the previous calendar month. It snapshots active subscribers once per tenant/period and creates a separate, idempotent Lumenix invoice. The scheduler runs it on the first day of each month. Platform invoices are not ISP customer invoices and are not settled through tenant Daraja accounts.
@@ -28,7 +28,7 @@ Without `--period`, the command uses the previous calendar month. It snapshots a
 ## Local verification
 
 ```sh
-docker compose exec app php artisan migrate --force
-docker compose exec app php artisan test --compact
-docker compose exec app vendor/bin/pint --test
+docker compose --profile development exec app php artisan migrate --force
+docker compose --profile development exec app php artisan test --compact
+docker compose --profile development exec app vendor/bin/pint --test
 ```

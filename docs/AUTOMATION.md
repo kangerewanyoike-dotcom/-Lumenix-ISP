@@ -22,8 +22,8 @@ The adapter posts form data to the provider SMS messaging endpoint and recognize
 Configure the tenant account and template in the UI with Africa’s Talking sandbox credentials, then run:
 
 ```powershell
-docker compose exec app php artisan automation:run --date=2026-11-25
-docker compose exec app php artisan schedule:list
+docker compose --profile development exec app php artisan automation:run --date=2026-11-25
+docker compose --profile development exec app php artisan schedule:list
 ```
 
 Automated tests fake the provider HTTP request; no real SMS is sent by the test suite. The first manual sandbox run is a real request to Africa’s Talking sandbox and needs a valid sandbox API key and destination configuration.

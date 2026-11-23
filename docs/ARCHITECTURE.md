@@ -74,11 +74,11 @@ Keep `.env` out of version control; commit only `.env.example` with placeholders
 ## Local workflow
 
 ```sh
-docker compose up -d
-docker compose exec app composer install
-docker compose exec app php artisan migrate:fresh --seed
-docker compose exec app php artisan test
-docker compose exec app ./vendor/bin/pint
+docker compose --profile development up -d
+docker compose --profile development exec app composer install
+docker compose --profile development exec app php artisan migrate:fresh --seed
+docker compose --profile development exec app php artisan test
+docker compose --profile development exec app ./vendor/bin/pint
 ```
 
 The exact image/build setup, RADIUS SQL bootstrap, and local credentials belong to Phase 1 implementation and must be documented without committing secrets.

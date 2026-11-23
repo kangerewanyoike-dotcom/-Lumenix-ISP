@@ -241,6 +241,19 @@ final class CustomerController extends Controller
         return back()->with('status', 'Subscription is active. RADIUS provisioning is queued; network connectivity will update from accounting.');
     }
 
+    public function retryProvisioning(string $customer, AuditLogger $audit, TenantContext $context): RedirectResponse
+    {
+        $customer = Customer::query()->findOrFail($customer);
+        $this->authorize('update', $customer);
+        abort_unless($customer->provisioning_status === 'failed', 409, 'Only failed provisioning can be retried.');
+        abort_unless($customer->status === 'active' && $customer->subscription_status === 'active', 422, 'Restore the subscriber entitlement before retrying provisioning.');
+
+        $customer->update(['provisioning_status' => 'pending', 'provisioned_at' => null]);
+        $audit->record('customer.provisioning_retried', (int) $context->id(), Customer::class, (string) $customer->id);
+
+        return back()->with('status', 'RADIUS provisioning was queued for retry.');
+    }
+
     public function export(Request $request, string $customer, AuditLogger $audit, TenantContext $context): StreamedResponse
     {
         $customer = Customer::query()->with(['plan', 'invoices.lines'])->findOrFail($customer);
