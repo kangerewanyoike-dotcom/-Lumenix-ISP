@@ -1,0 +1,1 @@
+<x-layouts.app><h1 class="mb-6 text-2xl font-semibold">Create customer</h1><form method="POST" action="{{ route('admin.customers.store') }}" class="max-w-2xl space-y-4 rounded bg-white p-6">@csrf @include('admin.customers.form')<button class="rounded bg-indigo-700 px-4 py-2 text-white">Create customer</button></form></x-layouts.app>

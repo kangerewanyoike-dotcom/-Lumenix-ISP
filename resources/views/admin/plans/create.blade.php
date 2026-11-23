@@ -1,0 +1,1 @@
+<x-layouts.app><h1 class="mb-6 text-2xl font-semibold">Create plan</h1><form method="POST" action="{{ route('admin.plans.store') }}" class="max-w-2xl space-y-4 rounded bg-white p-6">@csrf @include('admin.plans.form')<button class="rounded bg-indigo-700 px-4 py-2 text-white">Create plan</button></form></x-layouts.app>
