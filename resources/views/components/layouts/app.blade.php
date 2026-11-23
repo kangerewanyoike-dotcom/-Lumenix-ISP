@@ -51,7 +51,8 @@
         $currentLabel = collect([...$tenantLinks, ...$managementLinks, ...$platformLinks])->first(fn ($link) => $currentName === $link['route'])['label'] ?? \Illuminate\Support\Str::of($currentName ?? 'Workspace')->afterLast('.')->replace('-', ' ')->title();
     @endphp
 
-    <div class="app-frame" data-app-frame data-theme="{{ $hasTenant ? 'tenant' : ($isPlatformAdmin ? 'platform' : 'default') }}">
+    <div class="app-frame {{ auth()->check() ? '' : 'guest-frame' }}" data-app-frame data-theme="{{ $hasTenant ? 'tenant' : ($isPlatformAdmin ? 'platform' : 'default') }}">
+        @auth
         <div class="sidebar-scrim" data-sidebar-scrim></div>
         <aside class="app-sidebar" data-sidebar aria-label="Main navigation">
             <a href="{{ $hasTenant ? route('tenant.dashboard') : ($isPlatformAdmin ? route('platform.dashboard') : route('login')) }}" class="brand-lockup" aria-label="Lumenix home">
@@ -131,11 +132,14 @@
             </div>
             <button type="button" class="sidebar-collapse" data-sidebar-toggle aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/><path d="M20 4v16"/></svg></button>
         </aside>
+        @endauth
 
         <main class="app-main">
             <header class="topbar">
                 <div class="topbar-leading">
+                    @auth
                     <button type="button" class="mobile-menu-toggle" data-mobile-menu aria-label="Open navigation" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+                    @endauth
                     <div class="topbar-heading"><div class="breadcrumb"><span>{{ $hasTenant ? $membership->tenant->name : ($isPlatformAdmin ? 'Platform' : 'Welcome') }}</span><span class="breadcrumb-separator">/</span><strong>{{ $currentLabel }}</strong></div><h1>{{ $currentLabel }}</h1></div>
                 </div>
                 <div class="topbar-actions">
