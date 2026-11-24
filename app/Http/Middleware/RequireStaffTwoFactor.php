@@ -22,7 +22,7 @@ final class RequireStaffTwoFactor
         if (! $user->two_factor_confirmed_at) {
             return redirect()->route('account.security')->with('warning', 'Set up an authenticator code to continue to privileged staff pages.');
         }
-        if (! $request->session()->boolean('two_factor_passed')) {
+        if (! (bool) $request->session()->get('two_factor_passed', false)) {
             return redirect()->route('two-factor.challenge');
         }
 

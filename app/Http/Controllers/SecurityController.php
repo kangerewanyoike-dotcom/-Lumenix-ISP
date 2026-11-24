@@ -67,7 +67,7 @@ final class SecurityController extends Controller
         if (! $user->two_factor_confirmed_at) {
             return redirect()->route('account.security');
         }
-        if ($request->session()->boolean('two_factor_passed')) {
+        if ((bool) $request->session()->get('two_factor_passed', false)) {
             return redirect()->route($user->platformAdmin()->exists() ? 'platform.dashboard' : 'tenant.select');
         }
 
