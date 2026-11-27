@@ -12,8 +12,7 @@
         $membership = request()->attributes->get('tenant_membership');
         $isManager = in_array($membership?->role, ['owner', 'admin'], true);
         $isPlatformAdmin = auth()->check() && auth()->user()->platformAdmin()->exists();
-        $requiresTwoFactor = auth()->check() && ($isPlatformAdmin || auth()->user()->tenantMemberships()->where('status', 'active')->whereIn('role', ['owner', 'admin'])->exists());
-        $showAppNavigation = auth()->check() && (! $requiresTwoFactor || (auth()->user()->two_factor_confirmed_at && (bool) session()->get('two_factor_passed', false)));
+        $showAppNavigation = auth()->check();
         $platformBrandName = 'Lumenix';
         if ($isPlatformAdmin && \Illuminate\Support\Facades\Schema::hasTable('platform_settings')) {
             $platformBrandName = \Illuminate\Support\Facades\DB::table('platform_settings')->where('key', 'brand_name')->value('value') ?: 'Lumenix';
@@ -146,7 +145,6 @@
                 </div>
                 <div class="topbar-actions">
                     @if($hasTenant)<span class="topbar-status"><span></span>Workspace active</span>@elseif($isPlatformAdmin)<span class="topbar-status platform-status"><span></span>Platform console</span>@endif
-                    @if($showAppNavigation)<a class="text-xs font-semibold text-slate-600 underline" href="{{ route('account.security') }}">Security</a>@endif
                     <span class="topbar-date">{{ now()->format('D, M j') }}</span>
                     <span class="topbar-user-avatar" title="{{ auth()->user()?->name }}">{{ \Illuminate\Support\Str::substr(auth()->user()?->name ?? 'L', 0, 1) }}</span>
                 </div>

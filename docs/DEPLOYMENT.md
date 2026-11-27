@@ -63,6 +63,6 @@ Set and enforce backup retention with the operator's financial/privacy retention
 ## Network and access control
 
 - Enforce TLS for all user and provider traffic; add HSTS only after HTTPS is correct for every host.
-- Privileged staff sign-in requires TOTP authenticator verification after password authentication. Require recovery-code storage and test account recovery; periodically review memberships and remove dormant identities.
+- Authenticator verification is currently disabled. Enforce strong passwords, restrict privileged accounts, periodically review memberships and remove dormant identities.
 - Keep NAS/router paths private and allowlisted. Test tenant isolation, suspension/reactivation, disconnect behavior and accounting against a CHR/lab before connecting a real subscriber network.
 - Run dependency updates and vulnerability scans on a reviewed cadence; deploy security fixes promptly and keep a tested rollback/forward-fix path.

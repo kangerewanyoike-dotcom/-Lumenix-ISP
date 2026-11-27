@@ -6,7 +6,7 @@ Lumenix is a multi-tenant billing and subscriber management platform for Kenyan 
 
 - Docker Desktop with Docker Compose.
 - Copy `.env.example` to `.env`, set a unique `DB_PASSWORD`, and provide local demo account credentials before seeding. In PowerShell: `Copy-Item .env.example .env`.
-- Platform admins and ISP owners/admins must enroll in an authenticator app before opening privileged pages.
+- Staff sign in with email and password. Authenticator verification is disabled for now.
 
 The `.env` file contains local secrets and must not be committed. Generate `APP_KEY` after containers start with `docker compose --profile development exec app php artisan key:generate`; Compose mounts `.env` into the app container so the key is saved on the host. Recreate the app and workers so they load the new key.
 

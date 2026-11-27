@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Middleware\RequirePlatformAdmin;
-use App\Http\Middleware\RequireStaffTwoFactor;
 use App\Http\Middleware\ResolveCustomerPortal;
 use App\Http\Middleware\ResolveTenant;
 use Illuminate\Foundation\Application;
@@ -22,7 +21,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant' => ResolveTenant::class,
             'customer.portal' => ResolveCustomerPortal::class,
             'platform.admin' => RequirePlatformAdmin::class,
-            'staff.two-factor' => RequireStaffTwoFactor::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
